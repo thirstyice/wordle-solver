@@ -37,7 +37,7 @@ void wordle::addTried(std::string newTried) {
 		tried[position] = true;
 	}
 }
-std::string wordle::guess() {
+std::string wordle::getPossibleAnswers() {
 	// First, eliminate the words it can't be
 	std::string possibleAnswers = "";
 	{
@@ -55,7 +55,6 @@ std::string wordle::guess() {
 				match += green[column];
 			}
 		}
-		std::cout << match << '\n';
 		std::regex regex(match);
 		std::string s = answers;
 		auto begin = std::sregex_iterator(s.begin(), s.end(), regex);
@@ -75,7 +74,6 @@ std::string wordle::guess() {
 		}
 	}
 	match += "]{5}\n";
-	std::cout << match << '\n';
 	std::regex regex(match);
 	std::string s = possibleAnswers;
 	auto begin = std::sregex_iterator(s.begin(), s.end(), regex);
@@ -107,13 +105,13 @@ std::string wordle::guess() {
 			yellowLettersRegex += 'a' + i;
 		}
 	}
+	std::cout << '\n';
 	possibleAnswers = "";
 	for (size_t i = 0; i < matchNum; i++) {
 		bool failed = false;
 		for (size_t letter = 0; letter < yellowLettersRegex.length(); letter++) {
 			if (possibleArray[i].find(yellowLettersRegex[letter]) == std::string::npos) {
 				failed = true;
-				//break;
 			}
 		}
 		if (failed == false) {
@@ -121,4 +119,58 @@ std::string wordle::guess() {
 		}
 	}
 	return possibleAnswers;
+}
+int getCharCount(std::string string, char character) {
+	int count = 0;
+	for (size_t i = 0; i < string.length(); i++) {
+		if (string[i]==character) {
+			count ++;
+		}
+	}
+	return count;
+}
+std::string wordle::guess() {
+
+	std::string possibleAnswers = getPossibleAnswers();
+	if (possibleAnswers=="") {
+		return "";
+	}
+	char highestChars[] = {'.','.','.','.','.'};
+	int highestCount[5] = {0};
+	for (char letter = 'a'; letter < ('a' + 26); letter++) {
+		int count = getCharCount(possibleAnswers, letter);
+		if (count > highestCount[0]) {
+			for (size_t i = 0; i < 4; i++) {
+				if (highestCount[i+1] > count) {
+					break;
+				}
+				highestChars[i] = highestChars[i+1];
+				highestCount[i] = highestCount[i+1];
+				highestChars[i+1] = letter;
+				highestCount[i+1] = count;
+			}
+		}
+	}
+	std::string guesses = possibleAnswers;
+	for (int i = 4; i >= 0; --i) {
+		std::string s = "";
+		std::string m = "\n[a-z]*";
+		m += highestChars[i];
+		m += "[a-z]*\n";
+		std::cout << i << m;
+		std::regex regex(m);
+		auto begin = std::sregex_iterator(guesses.begin(), guesses.end(), regex);
+		auto end = std::sregex_iterator();
+		for (std::sregex_iterator ri = begin; ri != end; ++ri) {
+			std::smatch match = *ri;
+			std::string matchString = match.str();
+			s += matchString;
+		}
+		if (s=="") {
+			break;
+		}
+		guesses = s;
+	}
+	return guesses;
+
 }

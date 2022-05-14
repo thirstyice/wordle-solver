@@ -17,6 +17,7 @@ public:
 	void addYellow(char[5]);
 	void addTried(std::string);
 	int getNumPossible();
+	std::string getPossibleAnswers();
 	std::string guess();
 };
 
